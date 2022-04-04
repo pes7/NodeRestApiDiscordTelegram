@@ -1,7 +1,8 @@
 const express = require("express");
 const mongoClient = require("./modules/mongoConnector.js");
-const User = require("./classes/User.js");
-const multer = require('multer');
+const { User } = require("./classes/User.js");
+//import { User } from "./classes/User";
+const multer = require("multer");
 const fs = require("fs");
 
 mongoClient.init(
@@ -16,115 +17,82 @@ mongoClient.init(
     console.log(error);
   }
 );
-
 mongoClient.registerTables(["DiscrodUsers", "TelegramUsers", "Messages"]);
 
 const app = express();
-
-const jsonParser = express.json();
-
 app.use(express.static(__dirname + "/public"));
 
 app.get("/api/users", function (req, res) {
-  //     let users = mongoClient.getClient().
-  //   const content = fs.readFileSync(filePath, "utf8");
-  //   const users = JSON.parse(content);
-  //   /res.send(users);
+  User.getAllUsers((users) => {
+    if (!users) return res.sendStatus(500);
+    res.send(users);
+  });
 });
-// получение одного пользователя по id
-// app.get("/api/users/:id", function (req, res) {
-//   const id = req.params.id; // получаем id
-//   const content = fs.readFileSync(filePath, "utf8");
-//   const users = JSON.parse(content);
-//   let user = null;
-//   // находим в массиве пользователя по id
-//   for (var i = 0; i < users.length; i++) {
-//     if (users[i].id == id) {
-//       user = users[i];
-//       break;
-//     }
-//   }
-//   // отправляем пользователя
-//   if (user) {
-//     res.send(user);
-//   } else {
-//     res.status(404).send();
-//   }
-// });
+
+//получение одного пользователя по id
+app.get("/api/users/:id", async function (req, res) {
+  const userid = req.params.id;
+  
+  User.getUserByIdPromise(userid).then((user)=>{
+    res.send(user);
+  },(err)=>{
+    res.sendStatus(404);
+  });
+
+  // User.getUserById(userid, (user) => {
+  //   if (!user) return res.sendStatus(404);
+  //   res.send(user);
+  // });
+});
 
 // получение отправленных данных
-app.post("/api/users",multer().none(), function (req, res) {
+app.post("/api/users", multer().none(), function (req, res) {
   if (!req.body) return res.sendStatus(400);
 
   let name = req.body.name;
   let surname = req.body.surname;
   let userid = req.body.id;
   let login = req.body.login;
-  let from = req.body.from; // TG or DS
-
+  let from = req.body.from;
 
   let user = User.FromFieldsInstance(name, surname, userid, login, from);
 
   User.insertUser(user, (newUser) => {
-    if (newUser) {
-      res.send(newUser);
-    } else {
-      res.status(503).send();
-    }
+    if (!newUser || newUser?.message) return res.status(500).send(newUser.message);
+    res.send(newUser);
   });
 });
-// // удаление пользователя по id
-// app.delete("/api/users/:id", function (req, res) {
-//   const id = req.params.id;
-//   let data = fs.readFileSync(filePath, "utf8");
-//   let users = JSON.parse(data);
-//   let index = -1;
-//   // находим индекс пользователя в массиве
-//   for (var i = 0; i < users.length; i++) {
-//     if (users[i].id == id) {
-//       index = i;
-//       break;
-//     }
-//   }
-//   if (index > -1) {
-//     // удаляем пользователя из массива по индексу
-//     const user = users.splice(index, 1)[0];
-//     data = JSON.stringify(users);
-//     fs.writeFileSync("users.json", data);
-//     // отправляем удаленного пользователя
-//     res.send(user);
-//   } else {
-//     res.status(404).send();
-//   }
-// });
-// // изменение пользователя
-// app.put("/api/users", jsonParser, function (req, res) {
-//   if (!req.body) return res.sendStatus(400);
 
-//   const userId = req.body.id;
-//   const userName = req.body.name;
-//   const userAge = req.body.age;
+// удаление пользователя по id
+app.delete("/api/users/:id", function (req, res) {
+  let userid = req.params.id;
 
-//   let data = fs.readFileSync(filePath, "utf8");
-//   const users = JSON.parse(data);
-//   let user;
-//   for (var i = 0; i < users.length; i++) {
-//     if (users[i].id == userId) {
-//       user = users[i];
-//       break;
-//     }
-//   }
-//   // изменяем данные у пользователя
-//   if (user) {
-//     user.age = userAge;
-//     user.name = userName;
-//     data = JSON.stringify(users);
-//     fs.writeFileSync("users.json", data);
-//     res.send(user);
-//   } else {
-//     res.status(404).send(user);
-//   }
-// });
+  User.deleteUserById(userid, (result) => {
+    if (!result.deletedCount) return res.sendStatus(500);
+    res.send(result);
+  });
+});
+
+// изменение пользователя
+app.put("/api/users", function (req, res) {
+  if (!req.body) return res.sendStatus(400);
+
+  let name = req.body.name;
+  let surname = req.body.surname;
+  let userid = req.body.id;
+  let login = req.body.login;
+  let from = req.body.from;
+  let messageCount = req.body.messageCount;
+
+  
+  User.getUserById(userid, (user) => {
+    if (!user) return res.sendStatus(404);
+
+    if(name) user.name
+
+    //Дописать
+  });
+});
 
 app.listen(3000, function () {
   console.log("Сервер ожидает подключения...");

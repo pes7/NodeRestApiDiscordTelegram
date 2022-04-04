@@ -1,7 +1,13 @@
 {
+  "name": "my-project",
+  "version": "0.0.0",
   "dependencies": {
     "express": "^4.17.3",
     "mongodb": "^4.4.1",
     "multer": "^1.4.4"
+  },
+  "scripts": {
+    "start": "tsc --build & node ./built/app.js",
+    "build": "tsc --build"
   }
 }
