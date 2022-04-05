@@ -9,13 +9,18 @@
             "request": "launch",
             "runtimeArgs": [
                 "run",
-                "start"
+                "dev"
             ],
             "runtimeExecutable": "npm",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "type": "pwa-node"
+            "type": "pwa-node",
+            "tasks": [
+                { "taskName": "build" },
+                { "taskName": "start" },
+                { "taskName": "test" },
+              ]
         }
     ]
 }

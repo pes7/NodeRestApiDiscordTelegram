@@ -1,5 +1,5 @@
-import mongoClient from "../modules/mongoConnector";
-import { ObjectId } from "mongodb";
+import { MongoConnector } from "../modules/mongoConnector";
+import { FindOptions, ObjectId, OptionalId, WithId } from "mongodb";
 
 export enum FromType {
   Tg = "TG",
@@ -62,11 +62,11 @@ export class User {
   }
 
   static insertUser(user: User, clb: (user: User | Error) => {}) {
-    let userCollection = mongoClient.getCollection("Users");
+    let userCollection = MongoConnector.getCollection<User>("Users");
     if (userCollection) {
       this.getUserBySourceId(user.sourceid, (existUser) => {
         if (!existUser) {
-          userCollection.insertOne(user, function (err: Error, result: any) {
+          userCollection?.insertOne(user, function (err: any, result: any) {
             if (err) {
               console.log(err, "Error when User insert");
               return clb(err);
@@ -85,11 +85,11 @@ export class User {
     id: number | string,
     clb = (user: User | Error) => {}
   ): void {
-    let userCollection = mongoClient.getCollection("Users");
+    let userCollection = MongoConnector.getCollection("Users");
     if (userCollection) {
       userCollection.findOne(
         { _id: new ObjectId(id) },
-        function (err: Error, result: any) {
+        function (err: any, result: any) {
           if (err) {
             console.log(err, "Error when User find");
             return clb(err);
@@ -104,11 +104,11 @@ export class User {
     sourceId: number | string,
     clb = (user: User | Error) => {}
   ): void {
-    let userCollection = mongoClient.getCollection("Users");
+    let userCollection = MongoConnector.getCollection("Users");
     if (userCollection) {
       userCollection.findOne(
         { sourceid: sourceId },
-        function (err: Error, result: any) {
+        function (err: any, result: any) {
           if (err) {
             console.log(err, "Error when User find");
             return clb(err);
@@ -121,9 +121,9 @@ export class User {
 
   static async getUserBySourceIdPromise(
     sourceid: number | string
-  ): Promise<User> {
+  ): Promise<any> {
     try {
-      let userCollection = await mongoClient.getCollection("Users");
+      let userCollection = await MongoConnector.getCollection("Users");
       if (userCollection) {
         let result = await userCollection.findOne({ sourceid: sourceid });
         if (!result) {
@@ -139,11 +139,11 @@ export class User {
   }
 
   static deleteUserById(sourceid: number | string, clb = (result: any) => {}) {
-    let userCollection = mongoClient.getCollection("Users");
+    let userCollection = MongoConnector.getCollection("Users");
     if (userCollection) {
       userCollection.deleteOne(
         { sourceid: sourceid },
-        function (err: Error, result: any) {
+        function (err: any, result: any) {
           if (err) {
             console.log(err, "Error when User delete");
             return clb(err);
@@ -158,13 +158,13 @@ export class User {
     clb = (users: Array<User> | Error) => {},
     limit: number = 0
   ) {
-    let userCollection = mongoClient.getCollection("Users");
+    let userCollection = MongoConnector.getCollection("Users");
     if (userCollection) {
       if (limit > 0) {
         userCollection
           .find({ _id: { $exists: true } })
           .limit(limit)
-          .toArray(function (err: Error, result: any) {
+          .toArray(function (err: any, result: any) {
             if (err) {
               console.log(err, "Error when get list of Users");
               return clb(err);
@@ -175,7 +175,7 @@ export class User {
 
       userCollection
         .find({ _id: { $exists: true } })
-        .toArray(function (err: Error, result: any) {
+        .toArray(function (err: any, result: any) {
           if (err) {
             console.log(err, "Error when get list of Users");
             return clb(err);
@@ -186,7 +186,7 @@ export class User {
   }
 
   static updateUser(user: User, clb = (user: User | Error) => {}) {
-    let userCollection = mongoClient.getCollection("Users");
+    let userCollection = MongoConnector.getCollection("Users");
     user.mdDate = new Date(Date.now());
     //user.mdBy = 
 
@@ -201,10 +201,10 @@ export class User {
         //mdBy:
       },
     };
-    userCollection.updateOne(
+    userCollection?.updateOne(
       { sourceid: user.sourceid },
       newvalues,
-      function (err: Error, result: User) {
+      function (err: any, result: any) {
         if (err) {
           console.log(err, "Error when update User");
           return clb(err);
