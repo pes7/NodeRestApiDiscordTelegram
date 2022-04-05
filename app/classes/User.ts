@@ -14,6 +14,10 @@ export class User {
   login: string;
   from: FromType;
   messageCount: number;
+  crBy: string;
+  crDate: Date;
+  mdBy: string;
+  mdDate: Date | null;
   constructor(
     fromTg: any = null,
     fromDiscrod: any = null,
@@ -35,6 +39,11 @@ export class User {
       this.from = from;
       this.messageCount = 0;
     }
+
+    this.crBy = "";
+    this.mdBy = "";
+    this.mdDate = null;
+    this.crDate = new Date(Date.now());
   }
   static FromFieldsInstance(
     name: string,
@@ -110,7 +119,9 @@ export class User {
     }
   }
 
-  static async getUserBySourceIdPromise(sourceid: number | string): Promise<User> {
+  static async getUserBySourceIdPromise(
+    sourceid: number | string
+  ): Promise<User> {
     try {
       let userCollection = await mongoClient.getCollection("Users");
       if (userCollection) {
@@ -176,6 +187,8 @@ export class User {
 
   static updateUser(user: User, clb = (user: User | Error) => {}) {
     let userCollection = mongoClient.getCollection("Users");
+    user.mdDate = new Date(Date.now());
+    //user.mdBy = 
 
     var newvalues = {
       $set: {
@@ -184,6 +197,8 @@ export class User {
         login: user.login,
         from: user.from,
         messageCount: user.messageCount,
+        mdDate: user.mdDate,
+        //mdBy:
       },
     };
     userCollection.updateOne(
