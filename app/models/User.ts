@@ -1,4 +1,4 @@
-import { MongoConnector } from "../modules/mongoConnector";
+import { MongoConnector } from "../connectors/mongoConnector";
 import { FindOptions, ObjectId, OptionalId, WithId } from "mongodb";
 
 export enum FromType {

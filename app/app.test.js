@@ -1,6 +1,6 @@
 const request = require("supertest");
 const assert = require("assert");
-const { MongoConnector } = require("./modules/mongoConnector.js");
+const { MongoConnector } = require("./connectors/mongoConnector.js");
 var app = require("./app").app;
 
 before(function (done) {
