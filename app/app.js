@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoClient = require("./modules/mongoConnector.js");
 const { User } = require("./classes/User.js");
-//import { User } from "./classes/User";
 const multer = require("multer");
 const fs = require("fs");
 
@@ -21,6 +20,7 @@ mongoClient.registerTables(["DiscrodUsers", "TelegramUsers", "Messages"]);
 
 const app = express();
 app.use(express.static(__dirname + "/public"));
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/api/users", function (req, res) {
   User.getAllUsers((users) => {
@@ -29,15 +29,17 @@ app.get("/api/users", function (req, res) {
   });
 });
 
-//получение одного пользователя по id
 app.get("/api/users/:id", async function (req, res) {
   const userid = req.params.id;
-  
-  User.getUserByIdPromise(userid).then((user)=>{
-    res.send(user);
-  },(err)=>{
-    res.sendStatus(404);
-  });
+
+  User.getUserBySourceIdPromise(userid).then(
+    (user) => {
+      res.send(user);
+    },
+    (err) => {
+      res.status(404).send(err.message);
+    }
+  );
 
   // User.getUserById(userid, (user) => {
   //   if (!user) return res.sendStatus(404);
@@ -45,25 +47,24 @@ app.get("/api/users/:id", async function (req, res) {
   // });
 });
 
-// получение отправленных данных
 app.post("/api/users", multer().none(), function (req, res) {
   if (!req.body) return res.sendStatus(400);
 
   let name = req.body.name;
   let surname = req.body.surname;
-  let userid = req.body.id;
+  let sourceid = req.body.sourceid;
   let login = req.body.login;
   let from = req.body.from;
 
-  let user = User.FromFieldsInstance(name, surname, userid, login, from);
+  let user = User.FromFieldsInstance(name, surname, sourceid, login, from);
 
   User.insertUser(user, (newUser) => {
-    if (!newUser || newUser?.message) return res.status(500).send(newUser.message);
+    if (!newUser || newUser?.message)
+      return res.status(500).send(newUser.message);
     res.send(newUser);
   });
 });
 
-// удаление пользователя по id
 app.delete("/api/users/:id", function (req, res) {
   let userid = req.params.id;
 
@@ -73,24 +74,31 @@ app.delete("/api/users/:id", function (req, res) {
   });
 });
 
-// изменение пользователя
-app.put("/api/users", function (req, res) {
+app.put("/api/users", multer().none(), function (req, res) {
   if (!req.body) return res.sendStatus(400);
 
   let name = req.body.name;
   let surname = req.body.surname;
-  let userid = req.body.id;
+  let sourceid = req.body.sourceid;
   let login = req.body.login;
   let from = req.body.from;
   let messageCount = req.body.messageCount;
 
-  
-  User.getUserById(userid, (user) => {
+  User.getUserBySourceId(sourceid, (user) => {
     if (!user) return res.sendStatus(404);
 
-    if(name) user.name
+    if (name) user.name = name;
+    if (surname) user.surname = surname;
+    if (login) user.login = login;
+    if (from) user.from = from;
+    if (messageCount) user.messageCount = messageCount;
 
-    //Дописать
+    User.updateUser(user, (updatedUser) => {
+      if (!updatedUser || updatedUser?.message) {
+        return res.status(500).send(newUser.message);
+      }
+      res.send(updatedUser);
+    });
   });
 });
 
