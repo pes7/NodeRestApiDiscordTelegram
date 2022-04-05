@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build",
     "start": "node ./built/app.js",
-    "test": "mocha ./built/*.test.js",
+    "test": "mocha --timeout 5000 ./built/*.test.js",
     "timeout": "node -e \"require('node:timers/promises').setTimeout(5_000)\"",
     "dev": "npm run build && npm run start",
     "dev-ol": "npm run build && npm run test && timeout && npm run start",

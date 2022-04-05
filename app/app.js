@@ -16,94 +16,99 @@ const mongoConnector = new MongoConnector({
   password: "password",
 });
 MongoConnector.registerTables(["DiscrodUsers", "TelegramUsers", "Messages"]);
-MongoConnector.connect().then(() => {
-
-  app.get("/api/users", function (req, res) {
-    User.getAllUsers((users) => {
-      if (!users) return res.sendStatus(500);
-      res.send(users);
-    });
-  });
-
-  app.get("/api/users/:id", async function (req, res) {
-    const userid = req.params.id;
-
-    User.getUserBySourceIdPromise(userid).then(
-      (user) => {
-        res.send(user);
-      },
-      (err) => {
-        res.status(404).send(err.message);
-      }
-    );
-
-    // User.getUserById(userid, (user) => {
-    //   if (!user) return res.sendStatus(404);
-    //   res.send(user);
-    // });
-  });
-
-  app.post("/api/users", multer().none(), function (req, res) {
-    if (!req.body) return res.sendStatus(400);
-
-    let name = req.body.name;
-    let surname = req.body.surname;
-    let sourceid = req.body.sourceid;
-    let login = req.body.login;
-    let from = req.body.from;
-
-    let user = User.FromFieldsInstance(name, surname, sourceid, login, from);
-
-    User.insertUser(user, (newUser) => {
-      if (!newUser || newUser?.message)
-        return res.status(500).send(newUser.message);
-      res.send(newUser);
-    });
-  });
-
-  app.delete("/api/users/:id", function (req, res) {
-    let userid = req.params.id;
-
-    User.deleteUserById(userid, (result) => {
-      if (!result.deletedCount) return res.sendStatus(500);
-      res.send(result);
-    });
-  });
-
-  app.put("/api/users", multer().none(), function (req, res) {
-    if (!req.body) return res.sendStatus(400);
-
-    let name = req.body.name;
-    let surname = req.body.surname;
-    let sourceid = req.body.sourceid;
-    let login = req.body.login;
-    let from = req.body.from;
-    let messageCount = req.body.messageCount;
-
-    User.getUserBySourceId(sourceid, (user) => {
-      if (!user) return res.sendStatus(404);
-
-      if (name) user.name = name;
-      if (surname) user.surname = surname;
-      if (login) user.login = login;
-      if (from) user.from = from;
-      if (messageCount) user.messageCount = messageCount;
-
-      User.updateUser(user, (updatedUser) => {
-        if (!updatedUser || updatedUser?.message) {
-          return res.status(500).send(newUser.message);
-        }
-        res.send(updatedUser);
+MongoConnector.connect()
+  .then(() => {
+    app.get("/api/users", function (req, res) {
+      User.getAllUsers((users) => {
+        if (!users) return res.sendStatus(500);
+        res.send(users);
       });
     });
+
+    app.get("/api/users/:id", async function (req, res) {
+      const userid = req.params.id;
+
+      User.getUserBySourceIdPromise(userid).then(
+        (user) => {
+          res.send(user);
+        },
+        (err) => {
+          res.status(404).send(err.message);
+        }
+      );
+
+      // User.getUserById(userid, (user) => {
+      //   if (!user) return res.sendStatus(404);
+      //   res.send(user);
+      // });
+    });
+
+    app.post("/api/users", multer().none(), function (req, res) {
+      if (!req.body) return res.sendStatus(400);
+
+      let name = req.body.name;
+      let surname = req.body.surname;
+      let sourceid = req.body.sourceid;
+      let login = req.body.login;
+      let from = req.body.from;
+
+      let user = User.FromFieldsInstance(name, surname, sourceid, login, from);
+
+      User.insertUser(user, (newUser) => {
+        if (!newUser || newUser?.message)
+          return res.status(500).send(newUser.message);
+        res.send(newUser);
+      });
+    });
+
+    app.delete("/api/users/:id", function (req, res) {
+      let userid = req.params.id;
+
+      User.deleteUserById(userid, (result) => {
+        if (!result.deletedCount) return res.sendStatus(500);
+        res.send(result);
+      });
+    });
+
+    app.put("/api/users", multer().none(), function (req, res) {
+      if (!req.body) return res.sendStatus(400);
+
+      let name = req.body.name;
+      let surname = req.body.surname;
+      let sourceid = req.body.sourceid;
+      let login = req.body.login;
+      let from = req.body.from;
+      let messageCount = req.body.messageCount;
+
+      User.getUserBySourceId(sourceid, (user) => {
+        if (!user) return res.sendStatus(404);
+
+        if (name) user.name = name;
+        if (surname) user.surname = surname;
+        if (login) user.login = login;
+        if (from) user.from = from;
+        if (messageCount) user.messageCount = messageCount;
+
+        User.updateUser(user, (updatedUser) => {
+          if (!updatedUser || updatedUser?.message) {
+            return res.status(500).send(newUser.message);
+          }
+          res.send(updatedUser);
+        });
+      });
+    });
+
+    app.emit("AppReady");
+  })
+  .catch((exception) => {
+    console.log(exception);
+    process.exit();
   });
 
-  app.listen(3000, function () {
-    console.log("Сервер ожидает подключения...");
+  MongoConnector.getInstance().on("TablesLoaded", function () {
+    app.listen(3000, function () {
+        console.log("Server is waiting for connections...");
+      });
   });
-}).catch((exception)=>{
-  console.log(exception);
-  process.exit();
-});
 
 module.exports.app = app;

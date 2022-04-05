@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import { EventEmitter } from "events";
 /*
 Реконнект не працює, потрібно робити брокер повідомлень і відправляти через нього івенти на підключення і відключення від бази.
 */
@@ -8,7 +9,7 @@ const options = {
   socketTimeoutMS: 5000,
   reconnectTries: 600,
 };
-export class MongoConnector {
+export class MongoConnector extends EventEmitter {
   static tables: Array<string> = [];
   static client: MongoClient;
   static repositoryParams: any;
@@ -16,7 +17,11 @@ export class MongoConnector {
   static url: string = "";
   static connecting: boolean = false;
 
+  private static instance: MongoConnector;
+
   constructor(repositoryParams: any) {
+    super();
+
     MongoConnector.repositoryParams = repositoryParams;
     MongoConnector.dbName = repositoryParams.dbName;
 
@@ -30,6 +35,15 @@ export class MongoConnector {
       ":" +
       repositoryParams.port;
     MongoConnector.url = url;
+  }
+
+  static getInstance() {
+    if (!MongoConnector.instance) {
+      MongoConnector.instance = new MongoConnector(
+        MongoConnector.repositoryParams
+      );
+    }
+    return MongoConnector.instance;
   }
 
   static connect(): Promise<string> {
@@ -50,6 +64,7 @@ export class MongoConnector {
       .then(function (dbClient) {
         if (dbClient) {
           console.log("Mongo connected!");
+          MongoConnector.getInstance().emit("MongoConnected");
           MongoConnector.connecting = false;
           MongoConnector.client = dbClient;
           MongoConnector.createCollections();
@@ -72,10 +87,10 @@ export class MongoConnector {
 
   static reconnectWithAwait() {
     setTimeout((onError) => {
-        if (this.connecting) {
-            return;
-        }
-       MongoConnector.connect().then();
+      if (this.connecting) {
+        return;
+      }
+      MongoConnector.connect().then();
     }, options.reconnectInterval);
   }
 
@@ -106,9 +121,23 @@ export class MongoConnector {
     this.createCollectionInDB(table);
   }
 
+  static loadedTables: number = 0;
   static createCollections(): void {
+    let event = MongoConnector.getInstance();
+    MongoConnector.loadedTables = 0;
+
+    event.on("table_connected", () => {
+      MongoConnector.loadedTables++;
+      if (MongoConnector.loadedTables >= MongoConnector.tables.length) {
+        event.emit("TablesLoaded");
+        console.log("All tables loaded!");
+      }
+    });
+
     this.tables.forEach((table: any) => {
-      this.createCollectionInDB(table);
+      this.createCollectionInDB(table, () => {
+        event.emit("table_connected");
+      });
     });
   }
 
