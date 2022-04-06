@@ -28,8 +28,13 @@ MongoConnector.connect()
   });
 
 MongoConnector.getInstance().on("TablesLoaded", function () {
-  app.listen(3000, function () {
+  let server = app.listen(3000, function () {
     console.log("Server is waiting for connections...");
+    app.emit("ServerRun");
+  });
+
+  app.on("Stop",()=>{
+    server.close();
   });
 });
 
