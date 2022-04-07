@@ -1,13 +1,19 @@
 const express = require("express");
 const { MongoConnector } = require("./connectors/mongoConnector.js");
-const { User } = require("./models/User.js");
-const fs = require("fs");
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
 
 const app = express();
-var router = express.Router();
+
 app.use(express.static(__dirname + "/public"));
 app.use(express.urlencoded({ extended: true }));
 
+app.use(helmet());
+app.use(cors());
+app.use(morgan('combined'));
+
+app.use('/api', require('./routes/apiAuthRouter'))
 app.use('/api', require('./routes/userRouter'))
 
 const mongoConnector = new MongoConnector({
@@ -17,7 +23,7 @@ const mongoConnector = new MongoConnector({
   user: "root",
   password: "password",
 });
-MongoConnector.registerTables(["DiscrodUsers", "TelegramUsers", "Messages"]);
+MongoConnector.registerTables(["DiscrodUsers", "TelegramUsers", "Messages", "AuthAPI"]);
 MongoConnector.connect()
   .then(() => {
 

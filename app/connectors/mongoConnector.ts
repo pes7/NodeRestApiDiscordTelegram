@@ -146,12 +146,14 @@ export class MongoConnector extends EventEmitter {
     if (this.client) {
       var db = this.client.db(this.dbName);
       db.createCollection(table, function (err: any, res: any) {
-        if (err.code != 48) {
-          console.log(`Collection ${table} created!`);
-        } else if (err.code == 48) {
-          console.log(`Collection ${table} allready exist!`);
-        } else {
-          console.log(err);
+        if (err) {
+          if (err.code != 48) {
+            console.log(`Collection ${table} created!`);
+          } else if (err.code == 48) {
+            console.log(`Collection ${table} allready exist!`);
+          } else {
+            console.log(err);
+          }
         }
         if (callback) callback();
       });

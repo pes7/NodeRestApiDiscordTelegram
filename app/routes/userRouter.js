@@ -1,28 +1,29 @@
 import { User } from "../models/User";
+const secretCheck = require("../middleware/secretChecker");
 const multer = require("multer");
 var router = require("express").Router();
 
-router.get("/users", function (req, res) {
+router.get("/users", secretCheck.verify, function (req, res) {
   User.getAllUsers((users) => {
     if (!users) return res.sendStatus(500);
-    res.send(users);
+    res.json(users);
   });
 });
 
-router.get("/users/:id", async function (req, res) {
+router.get("/users/:id", secretCheck.verify, async function (req, res) {
   const userid = req.params.id;
 
   User.getUserBySourceIdPromise(userid).then(
     (user) => {
-      res.send(user);
+      res.json(user);
     },
     (err) => {
-      res.status(404).send(err.message);
+      res.status(404).json(err.message);
     }
   );
 });
 
-router.post("/users", multer().none(), function (req, res) {
+router.post("/users", [multer().none(), secretCheck.verify], function (req, res) {
   if (!req.body) return res.sendStatus(400);
 
   let name = req.body.name;
@@ -35,21 +36,21 @@ router.post("/users", multer().none(), function (req, res) {
 
   User.insertUser(user, (newUser) => {
     if (!newUser || newUser?.message)
-      return res.status(500).send(newUser.message);
-    res.send(newUser);
+      return res.status(500).json(newUser.message);
+    res.json(newUser);
   });
 });
 
-router.delete("/users/:id", function (req, res) {
+router.delete("/users/:id", secretCheck.verify, function (req, res) {
   let userid = req.params.id;
 
   User.deleteUserById(userid, (result) => {
     if (!result.deletedCount) return res.sendStatus(500);
-    res.send(result);
+    res.json(result);
   });
 });
 
-router.put("/users", multer().none(), function (req, res) {
+router.put("/users", [multer().none(),secretCheck.verify], function (req, res) {
   if (!req.body) return res.sendStatus(400);
 
   let name = req.body.name;
@@ -70,9 +71,9 @@ router.put("/users", multer().none(), function (req, res) {
 
     User.updateUser(user, (updatedUser) => {
       if (!updatedUser || updatedUser?.message) {
-        return res.status(500).send(newUser.message);
+        return res.status(500).json(newUser.message);
       }
-      res.send(updatedUser);
+      res.json(updatedUser);
     });
   });
 });
