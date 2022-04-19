@@ -1,0 +1,53 @@
+query GetAll{
+  user(sourceid: "e4214b23b232v31123ev1") {
+    sourceid
+    name
+    surename
+    messageCount
+    crDate
+  }
+  users {
+    sourceid
+    name
+    messageCount
+  }
+}
+
+mutation CreateReviewForEpisode {
+  setMessageCountBySourceId(sourceid: "e4214b23b232v31", messageCount: 15) {
+    sourceid
+    name
+    messageCount
+  }
+}
+
+mutation InsertNewUser{
+  insertUser(input: 
+  {
+    sourceid: "rtfav3v2",
+  	name: "test2",
+    surename: "lastname2",
+    login: "myloginabe",
+    from: "TG",
+  }) {
+    sourceid,
+    name
+  }
+}
+
+mutation DeleteUser{
+  deleteUser(sourceid: "rtfav3v2")
+}
+
+mutation UpdateUser{
+  updateUser(input: 
+  {
+    sourceid: "rtfav3v2",
+  	name: "test4",
+    messageCount:234
+  }) {
+    sourceid,
+    name,
+    messageCount
+  }
+}

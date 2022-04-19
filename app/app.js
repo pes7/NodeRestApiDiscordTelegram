@@ -1,43 +1,19 @@
 const express = require("express");
 var { graphqlHTTP } = require('express-graphql');
 const { MongoConnector } = require("./connectors/mongoConnector.js");
-const schema = require("./schema.js");
-const resolver = require("./resolver.js");
+const { helmet } = require("./configs/helmetConfig.js");
+const schema = require("./graphql/schema.js");
 const cors = require('cors');
-const helmet = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const { default: root } = require("./graphql/resolver.js");
 
 const app = express();
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: [
-        "'self'",
-        /** @by-us - adds graphiql support over helmet's default CSP */
-        "'unsafe-inline'",
-      ],
-      baseUri: ["'self'"],
-      blockAllMixedContent: [],
-      fontSrc: ["'self'", 'https:', 'data:'],
-      frameAncestors: ["'self'"],
-      imgSrc: ["'self'", 'data:'],
-      objectSrc: ["'none'"],
-      scriptSrc: [
-        "'self'",
-        /** @by-us - adds graphiql support over helmet's default CSP */
-        "'unsafe-inline'",
-        /** @by-us - adds graphiql support over helmet's default CSP */
-        "'unsafe-eval'",
-      ],
-      upgradeInsecureRequests: [],
-    },
-  },
-}));
+app.use(helmet);
 app.use(cors());
 app.use(morgan('combined'));
 
@@ -46,7 +22,7 @@ app.use('/api', require('./routes/userRouter'))
 
 app.use('/graphql', graphqlHTTP({
   schema: schema,
-  rootValue: resolver,
+  rootValue: root,
   graphiql: true,
 }));
 
